@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kwanzaa Jeopardy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE occasion: a classroom quiz game for kids, bright and festive
+   IDEA a kinara-lit game board in kente stripes; candles light as tiles get played
+   PICTURE the board itself, with a kinara whose seven candles count the game's progress
+   COLOUR near-black ground, Kwanzaa red, green and black, kente gold accent
+   TYPE Lilita One + Nunito
+   LAYOUT header with kinara, full-width board, team scores under it; phone: board scrolls sideways */
+:root{color-scheme:dark;--bg:#111010;--ink:#fff8ec;--red:#c8232c;--green:#127a3c;--green2:#0b5a2b;--gold:#f4b731;--used:#1d1b1a;--line:#2c2a28}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:600 16px/1.5 Nunito,system-ui,sans-serif;overflow-x:clip}
+.kente{height:14px;background:repeating-linear-gradient(90deg,var(--red) 0 28px,#000 28px 36px,var(--gold) 36px 46px,#000 46px 54px,var(--green) 54px 82px,#000 82px 90px,var(--gold) 90px 100px,#000 100px 108px)}
+.wrap{max-width:1240px;margin:0 auto;padding-block:20px 40px;padding-left:max(5vw,16px,env(safe-area-inset-left,0px));padding-right:max(5vw,16px,env(safe-area-inset-right,0px))}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+h1{font:400 clamp(34px,5vw,52px)/1.05 "Lilita One",system-ui;letter-spacing:-.01em;margin:0}
+h1 b{font-weight:400;color:var(--gold)}
+.sub{margin:6px 0 0;color:#d9cfc0;font-size:16px}
+#kinara{width:220px;height:110px;flex:none}
+.scroll{overflow-x:auto;padding-bottom:6px}
+.board{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;min-width:640px}
+.cat{background:var(--red);border-radius:10px;padding:10px 8px;min-height:76px;display:flex;align-items:center;justify-content:center;text-align:center;font:400 clamp(15px,1.6vw,20px)/1.15 "Lilita One",system-ui;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25)}
+.tile{border:0;border-radius:10px;min-height:clamp(62px,8vw,88px);background:linear-gradient(var(--green),var(--green2));color:var(--gold);font:400 clamp(24px,3vw,38px)/1 "Lilita One",system-ui;cursor:pointer;box-shadow:inset 0 -5px 0 rgba(0,0,0,.28);transition:transform .12s}
+.tile:hover{transform:translateY(-2px)}
+.tile:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.tile.used{background:var(--used);color:transparent;cursor:default;box-shadow:none;transform:none}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:22px 0 12px}
+.bar h2{font:400 26px/1.1 "Lilita One",system-ui;margin:0}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:999px;padding:10px 18px;min-height:44px;font:800 16px Nunito,system-ui;cursor:pointer;background:#2b2826;color:var(--ink)}
+.btn.gold{background:var(--gold);color:#1b1206}
+.btn.red{background:var(--red);color:#fff}
+.btn.green{background:var(--green);color:#fff}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.team{background:#1c1a19;border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:6px}
+.team input{font:800 17px Nunito,system-ui;color:var(--ink);background:transparent;border:0;border-bottom:2px dashed #4a4642;padding:2px 0;width:100%}
+.team input:focus{outline:0;border-bottom-color:var(--gold)}
+.score{font:400 40px/1 "Lilita One",system-ui;color:var(--gold);white-space:nowrap}
+.score.neg{color:#ff7a7a}
+.adj{display:flex;gap:6px;align-items:center}
+.adj button{width:44px;height:36px;border-radius:8px;border:1px solid var(--line);background:#262321;color:var(--ink);font:800 18px Nunito;cursor:pointer}
+.adj span{font-size:14px;color:#b9ae9f}
+.x{margin-left:auto;background:none!important;border:0!important;color:#9a8f82!important;font-size:14px!important;width:auto!important}
+.help{color:#b9ae9f;font-size:14px;margin-top:14px}
+/* clue screen */
+#modal{position:fixed;inset:0;z-index:10;background:radial-gradient(circle at 50% 30%,#168a45,#08401f 75%);display:flex;flex-direction:column;overflow:auto}
+#modal .in{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;padding:28px max(5vw,16px) calc(28px + env(safe-area-inset-bottom,0px))}
+.tag{font:400 20px "Lilita One",system-ui;color:var(--gold)}
+.dd{font:400 clamp(40px,8vw,84px)/1 "Lilita One",system-ui;color:var(--gold);text-shadow:0 4px 0 #000;animation:pop .5s ease-out}
+@keyframes pop{from{transform:scale(.4) rotate(-6deg);opacity:0}}
+.clue{font:400 clamp(26px,4.2vw,50px)/1.18 "Lilita One",system-ui;max-width:24ch;margin:0;text-wrap:balance}
+.ans{font:800 clamp(20px,2.8vw,30px)/1.3 Nunito,system-ui;background:#fff8ec;color:#0b3a1d;border-radius:14px;padding:12px 22px;max-width:40ch}
+.award{display:grid;gap:10px;justify-items:center}
+.award p{margin:0;color:#d8f0df}
+.who{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.pair{display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.28);border-radius:999px;padding:4px 6px 4px 14px}
+.pair b{white-space:nowrap}
+.pair i{font-style:normal;color:var(--gold);margin:0 6px;white-space:nowrap}
+.pair button{width:44px;height:40px;border-radius:999px;border:0;font:800 18px Nunito;cursor:pointer}
+.ok{background:#4fd07c;color:#06301a}.no{background:#ff8a8a;color:#4a0c0c}
+.wager{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.wager label{display:grid;gap:4px;background:rgba(0,0,0,.28);border-radius:12px;padding:10px 12px;font-size:15px}
+.wager input{font:800 18px Nunito;width:9em;padding:6px 8px;border-radius:8px;border:2px solid #9bd3ad;background:#fff;color:#111}
+@media (prefers-reduced-motion:reduce){.dd,.tile{animation:none;transition:none}}
+@media(max-width:600px){#kinara{width:170px;height:86px}.score{font-size:34px}}
+</style>
+</head>
+<body>
+
+<div class="kente"></div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Kwanzaa <b>Jeopardy</b></h1>
+      <p class="sub">Pick a box. Answer in the form of a question!</p>
+    </div>
+    <svg id="kinara" viewBox="0 0 220 110" aria-label="Kinara: a candle lights up as the game goes on"></svg>
+  </header>
+  <div class="scroll"><div class="board" id="board"></div></div>
+  <div class="bar">
+    <h2>Teams</h2>
+    <div class="btns">
+      <button class="btn" id="addT">+ Add team</button>
+      <button class="btn gold" id="finalB">Final Jeopardy</button>
+      <button class="btn" id="resetB">New game</button>
+    </div>
+  </div>
+  <div class="teams" id="teams"></div>
+  <p class="help">Tap a team name to change it. The small + and − fix a score by 100.</p>
+</div>
+<div class="kente"></div>
+<div id="modal" hidden></div>
+
+<script>
+{
+const CATS=[
+ {n:"Kwanzaa Basics",q:[
+  ["Kwanzaa starts on this date, the day after Christmas.","What is December 26?"],
+  ["Kwanzaa ends on this date, the first day of the new year.","What is January 1?"],
+  ["Kwanzaa is mostly celebrated in the U.S., Canada and this group of islands.","What is the Caribbean?"],
+  ["Kwanzaa was made to help African Americans fix this problem.","What is losing touch with their African cultures?"],
+  ["He created Kwanzaa and wrote the book “Kwanzaa: A Celebration of Family, Community, and Culture.”","Who is Maulana Karenga?"]]},
+ {n:"Symbols of Kwanzaa",q:[
+  ["This candle holder stands for the roots of the ancestors.","What is the Kinara?"],
+  ["This mat stands for tradition and history.","What is the Mkeka?"],
+  ["The Muhindi (corn) stands for these people, who hold the future.","Who are the children?"],
+  ["The Mazao (crops) stand for the harvest and the results of this.","What is hard work (labor)?"],
+  ["The Zawadi stand for the work and love parents give their children. In English, they are these.","What are gifts?"]]},
+ {n:"The Seven Principles",q:[
+  ["The Mishumaa Saba are this many candles, one for each principle.","What is seven?"],
+  ["Umoja, the first principle, means this.","What is unity?"],
+  ["Nia means this.","What is purpose?"],
+  ["Imani, the last principle, means this.","What is faith?"],
+  ["Kujichagulia means this.","What is self-determination?"]]},
+ {n:"Kwanzaa Traditions",q:[
+  ["Every night of Kwanzaa, families light one of these.","What is a candle?"],
+  ["An adult pours a little water or juice from this cup to remember the family's ancestors.","What is the Kikombe cha Umoja (the unity cup)?"],
+  ["After drinking from the unity cup, families chant this word.","What is Harambee?"],
+  ["Day six, Kuumba, celebrates this. It includes storytelling, problem-solving and humor, not just art.","What is creativity?"],
+  ["In Kwanzaa, “architecture” isn't about buildings. It means this.","What is the way a community is built to work together?"]]},
+ {n:"Food, Clothes & Music",q:[
+  ["A Kwanzaa dinner is a lot like this American feast, but without meat.","What is Thanksgiving?"],
+  ["Groundnut stew is often served with this grain.","What is rice?"],
+  ["Women often wear kaftans and these on their heads.","What are head wraps?"],
+  ["Men often wear a Kufi cap and this colorful shirt.","What is a dashiki?"],
+  ["Besides drums, these two kinds of music are often played during Kwanzaa.","What are jazz and R&B?"]]},
+ {n:"Christmas in Brazil",q:[
+  ["Brazil celebrates Christmas a lot like this country.","What is the United States?"],
+  ["Brazil's Santa Claus has this name.","Who is Papai Noel?"],
+  ["To get presents from Papai Noel, kids leave this in the window.","What is a sock?"],
+  ["Brazil's Christmas traditions came from this country, which once ruled Brazil.","What is Portugal?"],
+  ["This popular Brazilian Christmas song's name means “happy night.”","What is “Noite Feliz”?"]]}
+];
+const FINAL={cat:"Kwanzaa Colors",clue:"Name the three colors of Kwanzaa and what each one stands for.",ans:"Red = the struggle, black = the people, green = the future. They come from the Pan-African flag."};
+const VALS=[100,200,300,400,500];
+const TOTAL=CATS.length*5;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pickDD=()=>Math.floor(Math.random()*CATS.length)+"-"+(1+Math.floor(Math.random()*4));
+const fresh=()=>({teams:[{name:"Team 1",score:0},{name:"Team 2",score:0},{name:"Team 3",score:0}],used:[],dd:pickDD(),finalDone:false});
+let S;
+
+function kinara(){
+  const lit=S.finalDone?7:Math.floor(S.used.length/TOTAL*7);
+  const cols=["#c8232c","#c8232c","#c8232c","#1a1a1a","#127a3c","#127a3c","#127a3c"];
+  let g=`<path d="M14 72 Q110 96 206 72 L200 80 Q110 104 20 80Z" fill="#8a5a2b"/><rect x="100" y="86" width="20" height="14" fill="#6e4520"/><rect x="72" y="98" width="76" height="9" rx="4" fill="#8a5a2b"/>`;
+  /* light from the middle (black) outward: Umoja first, then left/right in turn */
+  const order=[3,2,4,1,5,0,6];
+  for(let i=0;i<7;i++){
+    const x=22+i*29,top=i==3?22:30;
+    g+=`<rect x="${x-7}" y="${top}" width="14" height="${70-top+(i==3?4:0)}" rx="3" fill="${cols[i]}" stroke="#ffffff33"/>`;
+    g+=`<rect x="${x-7}" y="${top}" width="4" height="${70-top}" fill="#ffffff22"/>`;
+    g+=`<line x1="${x}" y1="${top}" x2="${x}" y2="${top-4}" stroke="#ddd" stroke-width="1.5"/>`;
+    if(order.indexOf(i)<lit) g+=`<path d="M${x} ${top-22} C${x+8} ${top-12} ${x+6} ${top-4} ${x} ${top-3} C${x-6} ${top-4} ${x-8} ${top-12} ${x} ${top-22}Z" fill="#f4b731"/><path d="M${x} ${top-14} C${x+3} ${top-9} ${x+3} ${top-5} ${x} ${top-4} C${x-3} ${top-5} ${x-3} ${top-9} ${x} ${top-14}Z" fill="#fff4c2"/>`;
+  }
+  $("kinara").innerHTML=g;
+}
+
+function board(){
+  let h=CATS.map(c=>`<div class="cat">${esc(c.n)}</div>`).join("");
+  VALS.forEach((v,r)=>CATS.forEach((c,ci)=>{
+    const id=ci+"-"+r,u=S.used.includes(id);
+    h+=`<button class="tile${u?" used":""}" data-id="${id}" ${u?'disabled aria-label="already played"':`aria-label="${esc(c.n)} for ${v}"`}>${u?"":v}</button>`;
+  }));
+  $("board").innerHTML=h;
+}
+
+function teams(){
+  $("teams").innerHTML=S.teams.map((t,i)=>`<div class="team">
+    <input id="tn${i}" data-i="${i}" value="${esc(t.name)}" aria-label="Team name">
+    <div class="score${t.score<0?" neg":""}">${t.score}</div>
+    <div class="adj"><button data-adj="${i}" data-d="-100" aria-label="minus 100">−</button><button data-adj="${i}" data-d="100" aria-label="plus 100">+</button><span>100</span>${S.teams.length>1?`<button class="x" data-del="${i}">remove</button>`:""}</div>
+  </div>`).join("");
+}
+
+function render(){board();teams();kinara()}
+
+function whoButtons(val){
+  return `<div class="award"><p>Who got it? ✓ adds ${val}, ✗ takes it away.</p><div class="who">${S.teams.map((t,i)=>
+    `<span class="pair"><b>${esc(t.name)}</b><i id="ms${i}">${t.score}</i><button class="ok" data-pts="${val}" data-t="${i}" aria-label="${esc(t.name)} right">✓</button><button class="no" data-pts="${-val}" data-t="${i}" aria-label="${esc(t.name)} wrong">✗</button></span>`).join("")}</div></div>`;
+}
+
+function openClue(id){
+  const [ci,r]=id.split("-").map(Number),c=CATS[ci],dd=id===S.dd;
+  const val=VALS[r]*(dd?2:1);
+  const m=$("modal");
+  const show=()=>{
+    m.innerHTML=`<div class="kente"></div><div class="in">
+      <div class="tag">${esc(c.n)} · ${val}${dd?" (doubled!)":""}</div>
+      <p class="clue">${esc(c.q[r][0])}</p>
+      <button class="btn gold" id="reveal">Show answer</button>
+      <div id="after" hidden><div class="ans">${esc(c.q[r][1])}</div></div>
+      ${whoButtons(val)}
+      <button class="btn" id="back">Back to board</button>
+    </div>`;
+    $("reveal").onclick=()=>{$("after").hidden=false;$("reveal").hidden=true};
+    $("back").onclick=close;
+  };
+  if(!S.used.includes(id)){S.used.push(id)}
+  m.hidden=false;
+  if(dd){
+    m.innerHTML=`<div class="kente"></div><div class="in"><div class="dd">Daily Double!</div><p class="clue" style="font-size:clamp(20px,3vw,30px)">This box is worth double: ${val} points.</p><button class="btn gold" id="go">Show the clue</button></div>`;
+    $("go").onclick=show;$("go").focus();
+  } else {show();$("reveal").focus()}
+}
+
+function openFinal(){
+  const m=$("modal");m.hidden=false;
+  m.innerHTML=`<div class="kente"></div><div class="in">
+    <div class="dd" style="font-size:clamp(34px,6vw,64px)">Final Jeopardy</div>
+    <div class="tag">Category: ${esc(FINAL.cat)}</div>
+    <p style="margin:0">Each team writes down a wager (up to its score) before seeing the clue.</p>
+    <div class="wager">${S.teams.map((t,i)=>`<label>${esc(t.name)} (${t.score})<input id="w${i}" type="number" min="0" step="100" value="0" inputmode="numeric"></label>`).join("")}</div>
+    <button class="btn gold" id="fclue">Show the clue</button>
+    <div id="fbody" hidden style="display:grid;gap:22px;justify-items:center">
+      <p class="clue">${esc(FINAL.clue)}</p>
+      <button class="btn gold" id="fans">Show answer</button>
+      <div id="fa" hidden><div class="ans">${esc(FINAL.ans)}</div></div>
+      <div class="award"><p>Mark each team. Their wager is added or taken away.</p><div class="who">${S.teams.map((t,i)=>
+        `<span class="pair"><b>${esc(t.name)}</b><i id="ms${i}">${t.score}</i><button class="ok" data-fin="1" data-t="${i}">✓</button><button class="no" data-fin="-1" data-t="${i}">✗</button></span>`).join("")}</div></div>
+    </div>
+    <button class="btn" id="back">Back to board</button>
+  </div>`;
+  $("fclue").onclick=()=>{$("fbody").hidden=false;$("fclue").hidden=true;S.finalDone=true;kinara()};
+  $("fans").onclick=()=>{$("fa").hidden=false;$("fans").hidden=true};
+  $("back").onclick=close;
+}
+
+function close(){$("modal").hidden=true;$("modal").innerHTML="";render()}
+
+$("board").addEventListener("click",e=>{const b=e.target.closest(".tile");if(b&&!b.disabled)openClue(b.dataset.id)});
+$("modal").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-t]");if(!b)return;
+  const i=+b.dataset.t;let pts;
+  if(b.dataset.fin){
+    const w=Math.max(0,Math.round(+($("w"+i)?.value||0)));
+    pts=w*+b.dataset.fin;
+    b.parentNode.querySelectorAll("button").forEach(x=>x.disabled=true);
+  } else pts=+b.dataset.pts;
+  S.teams[i].score+=pts;
+  const ms=$("ms"+i);if(ms)ms.textContent=S.teams[i].score;
+  b.animate?.([{transform:"scale(1.25)"},{transform:"scale(1)"}],{duration:200});
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("modal").hidden)close()});
+$("teams").addEventListener("click",e=>{
+  const a=e.target.closest("[data-adj]");if(a){S.teams[+a.dataset.adj].score+=+a.dataset.d;teams();return}
+  const d=e.target.closest("[data-del]");if(d){S.teams.splice(+d.dataset.del,1);teams()}
+});
+$("teams").addEventListener("input",e=>{if(e.target.dataset.i!=null)S.teams[+e.target.dataset.i].name=e.target.value});
+$("addT").onclick=()=>{S.teams.push({name:"Team "+(S.teams.length+1),score:0});teams()};
+$("finalB").onclick=openFinal;
+let armed=false;
+$("resetB").onclick=()=>{
+  if(!armed){armed=true;$("resetB").textContent="Sure? Tap again";setTimeout(()=>{armed=false;$("resetB").textContent="New game"},3000);return}
+  armed=false;$("resetB").textContent="New game";
+  const names=S.teams.map(t=>t.name);S=fresh();S.teams=names.map(n=>({name:n,score:0}));render();
+};
+
+window.claude?.hot?.snapshot?.(()=>S);
+const start=d=>{S=(d&&d.teams&&d.used)?d:fresh();render()};
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+}
+</script>
+</body>
+</html>
